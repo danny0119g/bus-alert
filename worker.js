@@ -84,6 +84,14 @@ async function armPreciseAlarm(env, delayMs) {
   }
 }
 
+async function clearPreciseAlarm(env) {
+  try {
+    const id = env.PRECISE_ALARM.idFromName("singleton");
+    const stub = env.PRECISE_ALARM.get(id);
+    await stub.fetch("https://precise-alarm/clear", { method: "POST" });
+  } catch (e) {}
+}
+
 async function runCheck(env) {
   const result = await fetchArrivalSeconds(env);
 
@@ -105,12 +113,14 @@ async function runCheck(env) {
           "🚌 버스 도착 임박"
         );
         await env.BUS_STATE.put(alertedKey, "true");
+        await clearPreciseAlarm(env);
         return { status: "alert-sent", seconds, msg1: result.msg1 };
       } catch (e) {
         // 알림 전송이 실패해도 화면 표시는 정상적으로 유지, 다음 체크 때 다시 시도
         return { status: "waiting", seconds, msg1: result.msg1 };
       }
     }
+    await clearPreciseAlarm(env);
     return { status: "already-alerted", seconds, msg1: result.msg1 };
   }
 
@@ -523,6 +533,11 @@ export class PreciseAlarm {
   }
 
   async fetch(request) {
+    const url = new URL(request.url);
+    if (url.pathname === "/clear") {
+      await this.state.storage.deleteAlarm();
+      return new Response("cleared");
+    }
     const { delayMs } = await request.json();
     // 너무 먼 미래(30분 이상)는 예약할 필요 없음 - 다음 크론 때 다시 계산해서 갱신됨
     if (delayMs > 0 && delayMs < 30 * 60 * 1000) {
