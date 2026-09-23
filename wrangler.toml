@@ -5,6 +5,11 @@ compatibility_date = "2024-09-23"
 [triggers]
 crons = ["* * * * *"]
 
+[vars]
+ARS_ID = "23297"
+ROUTE_NAME = "361"
+NTFY_TOPIC = "bus-1fae3aa855471c34"
+
 [[kv_namespaces]]
 binding = "BUS_STATE"
 id = "e3c8dd98016c4e9cbd1123e8832dc6bd"
