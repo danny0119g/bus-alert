@@ -66,7 +66,7 @@ async function fetchArrivalSeconds(env) {
 }
 
 async function sendNtfy(env, message, title) {
-  const res = await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, {
+  const res = await fetch("https://ntfy.sh/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=utf-8",
