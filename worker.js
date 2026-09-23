@@ -121,7 +121,7 @@ async function runCheck(env) {
   // 6~7분(420초) 구간에 들어왔을 때만, 정확히 5분 남는 순간에 깨어나도록 예약
   // (멀리 있을 땐 매분 불필요하게 DO를 호출하지 않음)
   if (!wasAlerted && seconds != null && seconds > THRESHOLD_SECONDS && seconds <= 420) {
-    await armPreciseAlarm(env, (seconds - THRESHOLD_SECONDS) * 1000);
+    await armPreciseAlarm(env, (seconds - THRESHOLD_SECONDS) * 500); // 남은 차이의 절반만 대기 후 재확인 (반복 수렴)
   }
 
   return { status: "waiting", seconds, msg1: result.msg1 };
