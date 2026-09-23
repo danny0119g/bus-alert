@@ -260,6 +260,8 @@ function renderPage() {
     background: var(--blue);
     margin-right: 6px;
     box-shadow: 0 0 6px rgba(62,166,255,0.5);
+    position: relative;
+    top: 0.5px;
   }
   .dot.error {
     background: var(--red);
@@ -270,11 +272,12 @@ function renderPage() {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
   }
-  #statusText { color: var(--text-dim); }
+  #statusText { color: var(--text-dim); line-height: 1; }
   #statusText.error { color: var(--red); }
   .status-group {
     display: flex;
     align-items: center;
+    line-height: 1;
   }
   @media (max-width: 380px) {
     .countdown { font-size: 58px; }
