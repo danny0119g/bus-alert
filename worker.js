@@ -292,56 +292,77 @@ function renderPage() {
     return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
   }
 
-  async function refresh() {
-    const dot = document.getElementById('dot');
-    const statusText = document.getElementById('statusText');
-    const countdown = document.getElementById('countdown');
-    const unit = document.getElementById('unit');
-    const msg = document.getElementById('msg');
-    const updatedAt = document.getElementById('updatedAt');
+  const els = {
+    dot: document.getElementById('dot'),
+    statusText: document.getElementById('statusText'),
+    countdown: document.getElementById('countdown'),
+    unit: document.getElementById('unit'),
+    msg: document.getElementById('msg'),
+    alertBadge: document.getElementById('alertBadge'),
+    updatedAt: document.getElementById('updatedAt'),
+  };
 
+  // 로컬에서 매초 감소시키기 위한 기준값
+  let baseSeconds = null;   // 마지막으로 서버가 알려준 남은 초
+  let baseTimestamp = null; // 그 값을 받은 시각 (ms)
+  let isAlerted = false;
+
+  function render() {
+    if (baseSeconds == null) return;
+    const elapsed = Math.floor((Date.now() - baseTimestamp) / 1000);
+    const remaining = Math.max(0, baseSeconds - elapsed);
+    const isSoon = remaining <= 300;
+
+    els.countdown.textContent = remaining > 0 ? fmt(remaining) : '도착';
+    els.countdown.classList.toggle('soon', isSoon);
+    els.unit.classList.toggle('soon', isSoon);
+    els.unit.textContent = remaining > 0 ? '도착까지' : '';
+
+    els.alertBadge.classList.toggle('show', isSoon && isAlerted);
+  }
+
+  async function poll() {
     try {
       const res = await fetch('/api', { cache: 'no-store' });
       const data = await res.json();
       const now = new Date();
-      updatedAt.textContent = now.toLocaleTimeString('ko-KR', { hour12: false });
+      els.updatedAt.textContent = now.toLocaleTimeString('ko-KR', { hour12: false });
 
       if (data.status === 'waiting' || data.status === 'alert-sent' || data.status === 'already-alerted') {
-        const sec = data.seconds;
-        dot.classList.remove('off');
-        statusText.textContent = '정상';
-        if (sec != null && sec > 0) {
-          countdown.textContent = fmt(sec);
-          countdown.classList.toggle('soon', sec <= 300);
-          unit.textContent = '도착까지';
-          msg.textContent = data.msg1 || '';
-        } else {
-          countdown.textContent = '도착';
-          countdown.classList.add('soon');
-          unit.textContent = '';
-          msg.textContent = data.msg1 || '';
+        els.dot.classList.remove('off');
+        els.statusText.textContent = '정상';
+        els.msg.textContent = data.msg1 || '';
+        isAlerted = data.status === 'alert-sent' || data.status === 'already-alerted';
+
+        if (data.seconds != null) {
+          baseSeconds = data.seconds;
+          baseTimestamp = Date.now();
         }
       } else if (data.status === 'stop-not-found') {
-        dot.classList.add('off');
-        statusText.textContent = '오류';
-        countdown.textContent = '--:--';
-        unit.textContent = '정류소 정보 없음';
-        msg.textContent = '';
+        els.dot.classList.add('off');
+        els.statusText.textContent = '오류';
+        els.unit.textContent = '정류소 정보 없음';
+        els.msg.textContent = '';
+        baseSeconds = null;
+        els.countdown.textContent = '--:--';
       } else {
-        dot.classList.add('off');
-        statusText.textContent = '오류';
-        countdown.textContent = '--:--';
-        unit.textContent = data.message || '알 수 없는 오류';
-        msg.textContent = '';
+        els.dot.classList.add('off');
+        els.statusText.textContent = '오류';
+        els.unit.textContent = data.message || '알 수 없는 오류';
+        els.msg.textContent = '';
+        baseSeconds = null;
+        els.countdown.textContent = '--:--';
       }
     } catch (e) {
-      dot.classList.add('off');
-      statusText.textContent = '연결 실패';
+      els.dot.classList.add('off');
+      els.statusText.textContent = '연결 실패';
     }
+    render();
   }
 
-  refresh();
-  setInterval(refresh, 15000);
+  poll();
+  setInterval(poll, 20000);   // 20초마다 서버에서 실제 값 다시 받아오기 (보정)
+  setInterval(render, 1000);  // 매초 화면 숫자만 로컬로 갱신
 </script>
 </body>
 </html>`;
