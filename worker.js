@@ -276,7 +276,7 @@ function renderPage() {
       <div class="countdown" id="countdown">--:--</div>
       <div class="unit" id="unit">불러오는 중</div>
       <div class="msg" id="msg">&nbsp;</div>
-      <div class="alert-badge" id="alertBadge"><span class="bell">🔔</span><span>알림 전송됨</span></div>
+      <div class="alert-badge" id="alertBadge"><span class="bell">🔔</span><span>알림 보냈어요 — 나갈 준비하세요!</span></div>
     </div>
     <div class="divider"></div>
     <div class="footer">
@@ -306,17 +306,7 @@ function renderPage() {
   let baseSeconds = null;   // 마지막으로 서버가 알려준 남은 초
   let baseTimestamp = null; // 그 값을 받은 시각 (ms)
   let isAlerted = false;
-  let msgIsTicking = false; // arrmsg1이 "n분n초후" 형태라 같이 셀 수 있는지
-  let msgSuffix = '';       // "[7번째 전]" 같은 뒷부분
-  let msgStatic = '';       // 시간 표현이 아닌 경우 그대로 보여줄 문구
-
-  function formatMsg(remaining) {
-    if (!msgIsTicking) return msgStatic;
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
-    const core = m > 0 ? \`\${m}분 \${s}초 후\` : \`\${s}초 후\`;
-    return core + msgSuffix;
-  }
+  let stopsText = '';       // "7정류장 전" 같은 문구 (시간과 안 겹치게 정류장 수만)
 
   function render() {
     // 하단 시계는 항상 매초 살아있게
@@ -331,7 +321,7 @@ function renderPage() {
     els.countdown.classList.toggle('soon', isSoon);
     els.unit.classList.toggle('soon', isSoon);
     els.unit.textContent = remaining > 0 ? '도착까지' : '';
-    els.msg.textContent = formatMsg(remaining);
+    els.msg.textContent = stopsText;
 
     els.alertBadge.classList.toggle('show', isSoon && isAlerted);
   }
@@ -347,15 +337,8 @@ function renderPage() {
         isAlerted = data.status === 'alert-sent' || data.status === 'already-alerted';
 
         const raw = data.msg1 || '';
-        const looksLikeTime = /\\d+(분|초)/.test(raw) && raw.includes('후');
-        if (looksLikeTime) {
-          msgIsTicking = true;
-          const bracket = raw.match(/\\[[^\\]]*\\]/);
-          msgSuffix = bracket ? bracket[0] : '';
-        } else {
-          msgIsTicking = false;
-          msgStatic = raw;
-        }
+        const stopsMatch = raw.match(/(\\d+)번째\\s*전/);
+        stopsText = stopsMatch ? \`\${stopsMatch[1]}정류장 전\` : raw;
 
         if (data.seconds != null) {
           baseSeconds = data.seconds;
@@ -365,16 +348,14 @@ function renderPage() {
         els.dot.classList.add('off');
         els.statusText.textContent = '오류';
         els.unit.textContent = '정류소 정보 없음';
-        msgIsTicking = false;
-        msgStatic = '';
+        stopsText = '';
         baseSeconds = null;
         els.countdown.textContent = '--:--';
       } else {
         els.dot.classList.add('off');
         els.statusText.textContent = '오류';
         els.unit.textContent = data.message || '알 수 없는 오류';
-        msgIsTicking = false;
-        msgStatic = '';
+        stopsText = '';
         baseSeconds = null;
         els.countdown.textContent = '--:--';
       }
