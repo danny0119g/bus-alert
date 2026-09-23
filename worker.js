@@ -118,9 +118,16 @@ export default {
         return new Response(`전송 실패: ${e.message}`, { status: 500 });
       }
     }
-    const result = await runCheck(env);
-    return new Response(JSON.stringify(result, null, 2), {
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
+    try {
+      const result = await runCheck(env);
+      return new Response(JSON.stringify(result, null, 2), {
+        headers: { "content-type": "application/json; charset=utf-8" },
+      });
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ status: "exception", message: e.message, stack: e.stack }, null, 2),
+        { status: 500, headers: { "content-type": "application/json; charset=utf-8" } }
+      );
+    }
   },
 };
