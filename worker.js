@@ -270,7 +270,7 @@ function renderPage() {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
   }
-  #statusText { color: var(--text-dim); line-height: 1; position: relative; top: 1px; }
+  #statusText { color: var(--text-dim); line-height: 1; position: relative; top: 0.5px; }
   #statusText.error { color: var(--red); }
   .status-group {
     display: flex;
