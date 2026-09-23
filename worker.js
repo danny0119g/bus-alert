@@ -260,7 +260,6 @@ function renderPage() {
     background: var(--blue);
     margin-right: 6px;
     box-shadow: 0 0 6px rgba(62,166,255,0.5);
-    outline: 1px solid red;
   }
   .dot.error {
     background: var(--red);
@@ -271,7 +270,7 @@ function renderPage() {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
   }
-  #statusText { color: var(--text-dim); line-height: 1; outline: 1px solid lime; }
+  #statusText { color: var(--text-dim); line-height: 1; position: relative; top: 1px; }
   #statusText.error { color: var(--red); }
   .status-group {
     display: flex;
