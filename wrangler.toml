@@ -20,4 +20,4 @@ class_name = "PreciseAlarm"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["PreciseAlarm"]
+new_sqlite_classes = ["PreciseAlarm"]
