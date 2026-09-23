@@ -66,24 +66,15 @@ async function fetchArrivalSeconds(env) {
 }
 
 async function sendNtfy(env, message, title) {
-  const res = await fetch("https://ntfy.sh/", {
+  await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json; charset=utf-8",
+      Title: title || "버스 알림",
+      Priority: "high",
+      Tags: "bus",
     },
-    body: JSON.stringify({
-      topic: env.NTFY_TOPIC,
-      message: message,
-      title: title || "버스 알림",
-      priority: 5,
-      tags: ["bus"],
-    }),
+    body: message,
   });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`ntfy 전송 실패 (${res.status}): ${errText}`);
-  }
 }
 
 async function runCheck(env) {
@@ -128,12 +119,8 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === "/test-notify") {
-      try {
-        await sendNtfy(env, "테스트 알림입니다.", "🚌 테스트");
-        return new Response("테스트 알림을 보냈어요. ntfy 앱을 확인하세요.");
-      } catch (e) {
-        return new Response(`전송 실패: ${e.message}`, { status: 500 });
-      }
+      await sendNtfy(env, "테스트 알림입니다.", "🚌 테스트");
+      return new Response("테스트 알림을 보냈어요. ntfy 앱을 확인하세요.");
     }
     const result = await runCheck(env);
     return new Response(JSON.stringify(result, null, 2), {
