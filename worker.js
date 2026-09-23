@@ -207,9 +207,8 @@ function renderPage() {
     color: #fff;
     font-family: 'Doto', monospace;
     font-weight: 900;
-    font-variation-settings: 'ROND' 0;
+    font-variation-settings: 'ROND' 100;
     font-size: 26px;
-    letter-spacing: 1px;
     padding: 4px 12px;
     border-radius: 2px;
   }
@@ -226,10 +225,9 @@ function renderPage() {
   .countdown {
     font-family: 'Doto', monospace;
     font-weight: 900;
-    font-variation-settings: 'ROND' 0;
+    font-variation-settings: 'ROND' 100;
     font-size: 78px;
     line-height: 1;
-    letter-spacing: 1px;
     color: var(--amber);
     text-shadow: 0 0 6px var(--amber-glow);
     font-variant-numeric: tabular-nums;
