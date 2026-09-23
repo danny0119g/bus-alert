@@ -102,11 +102,10 @@ async function fireAlertWithResult(env, result) {
       `361번 버스가 약 ${minutes}분 후 ${(result.found && result.stNm) || "정류소"}에 도착해요. (${(result.found && result.msg1) || ""})`,
       "🚌 버스 도착 임박"
     );
+    await env.BUS_STATE.put("alerted", "true");
   } catch (e) {
-    // 실패해도 armed/alerted는 갱신 - 다음 6~7분 구간에서 다시 시도되진 않지만,
-    // 일반 크론의 안전망(아래 runCheck)이 따로 재전송을 시도함
+    // 전송 실패 시 alerted는 false로 남겨둬서 다음 체크(runCheck 안전망)가 재시도함
   }
-  await env.BUS_STATE.put("alerted", "true");
   await env.BUS_STATE.put("armed", "false");
 }
 
