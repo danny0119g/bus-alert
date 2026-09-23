@@ -350,6 +350,18 @@ function renderPage() {
   }
 
   async function poll() {
+    // 미리보기용: 주소 끝에 ?demo=error 붙이면 실제 오류 없이 오류 화면을 볼 수 있음
+    if (new URLSearchParams(location.search).get('demo') === 'error') {
+      els.dot.classList.add('error');
+      els.statusText.classList.add('error');
+      els.statusText.textContent = '일시적인 오류 · 다시 불러오는 중';
+      els.unit.textContent = '';
+      stopsText = '';
+      baseSeconds = null;
+      els.countdown.textContent = '--:--';
+      render();
+      return;
+    }
     try {
       const res = await fetch('/api', { cache: 'no-store' });
       const data = await res.json();
