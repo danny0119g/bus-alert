@@ -117,7 +117,7 @@ function renderPage() {
 <title>361 · 래미안그레이튼아파트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@400..900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #030303;
@@ -205,13 +205,13 @@ function renderPage() {
   .route-plate {
     background: var(--plate-blue);
     color: #fff;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 22px;
-    font-weight: 700;
+    font-family: 'Doto', monospace;
+    font-weight: 900;
+    font-variation-settings: 'ROND' 0;
+    font-size: 26px;
     letter-spacing: 1px;
-    padding: 5px 12px 4px;
+    padding: 4px 12px;
     border-radius: 2px;
-    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.08);
   }
   .stop-name {
     font-size: 14px;
@@ -224,10 +224,12 @@ function renderPage() {
     padding: 18px 0 8px;
   }
   .countdown {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 76px;
+    font-family: 'Doto', monospace;
+    font-weight: 900;
+    font-variation-settings: 'ROND' 0;
+    font-size: 78px;
     line-height: 1;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     color: var(--amber);
     text-shadow: 0 0 6px var(--amber-glow);
     font-variant-numeric: tabular-nums;
@@ -275,7 +277,7 @@ function renderPage() {
     align-items: center;
     font-size: 12px;
     color: var(--text-dim);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   }
   .dot {
     display: inline-block;
@@ -323,7 +325,7 @@ function renderPage() {
       <div class="countdown" id="countdown">--:--</div>
       <div class="unit" id="unit">불러오는 중</div>
       <div class="msg" id="msg">&nbsp;</div>
-      <div class="alert-badge" id="alertBadge"><span class="bell">🔔</span><span>알림 보냈어요 — 나갈 준비하세요!</span></div>
+      <div class="alert-badge" id="alertBadge">알림 전송됨</div>
     </div>
     <div class="divider"></div>
     <div class="footer">
