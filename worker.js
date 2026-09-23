@@ -85,15 +85,20 @@ async function runCheck(env) {
   if (seconds != null && seconds > 0 && seconds <= THRESHOLD_SECONDS) {
     if (!wasAlerted) {
       const minutes = Math.round(seconds / 60);
-      await sendNtfy(
-        env,
-        `361번 버스가 약 ${minutes}분 후 ${result.stNm || "정류소"}에 도착해요. (${result.msg1 || ""})`,
-        "🚌 버스 도착 임박"
-      );
-      await env.BUS_STATE.put(alertedKey, "true");
-      return { status: "alert-sent", seconds };
+      try {
+        await sendNtfy(
+          env,
+          `361번 버스가 약 ${minutes}분 후 ${result.stNm || "정류소"}에 도착해요. (${result.msg1 || ""})`,
+          "🚌 버스 도착 임박"
+        );
+        await env.BUS_STATE.put(alertedKey, "true");
+        return { status: "alert-sent", seconds, msg1: result.msg1 };
+      } catch (e) {
+        // 알림 전송이 실패해도 화면 표시는 정상적으로 유지, 다음 체크 때 다시 시도
+        return { status: "waiting", seconds, msg1: result.msg1 };
+      }
     }
-    return { status: "already-alerted", seconds };
+    return { status: "already-alerted", seconds, msg1: result.msg1 };
   }
 
   if (wasAlerted && (seconds == null || seconds > THRESHOLD_SECONDS)) {
@@ -366,26 +371,38 @@ function renderPage() {
       } else if (data.status === 'stop-not-found') {
         els.dot.classList.add('error');
         els.statusText.classList.add('error');
-        els.statusText.textContent = '정류소 정보를 찾을 수 없음';
+        els.statusText.textContent = '정류소 정보를 찾을 수 없음 · 다시 불러오는 중';
         els.unit.textContent = '';
         stopsText = '';
         baseSeconds = null;
         els.countdown.textContent = '--:--';
+        scheduleRetry();
       } else {
         els.dot.classList.add('error');
         els.statusText.classList.add('error');
-        els.statusText.textContent = data.message || '알 수 없는 오류';
+        els.statusText.textContent = '일시적인 오류 · 다시 불러오는 중';
         els.unit.textContent = '';
         stopsText = '';
         baseSeconds = null;
         els.countdown.textContent = '--:--';
+        scheduleRetry();
       }
     } catch (e) {
       els.dot.classList.add('error');
       els.statusText.classList.add('error');
-      els.statusText.textContent = '서버에 연결할 수 없음';
+      els.statusText.textContent = '서버에 연결할 수 없음 · 다시 불러오는 중';
+      scheduleRetry();
     }
     render();
+  }
+
+  let retryTimer = null;
+  function scheduleRetry() {
+    if (retryTimer) return; // 이미 재시도 예약돼 있으면 중복 예약 안 함
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      poll();
+    }, 4000);
   }
 
   poll();
