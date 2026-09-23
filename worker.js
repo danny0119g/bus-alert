@@ -103,6 +103,231 @@ async function runCheck(env) {
   return { status: "waiting", seconds, msg1: result.msg1 };
 }
 
+function renderPage() {
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>361 · 래미안그레이튼아파트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08090b;
+    --panel: #101215;
+    --bezel: #1c1f24;
+    --amber: #ffb400;
+    --amber-dim: #5c4000;
+    --amber-glow: rgba(255,180,0,0.35);
+    --red: #ff4433;
+    --text-dim: #6b7076;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--amber);
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    min-height: 100%;
+  }
+  .board {
+    width: 100%;
+    max-width: 480px;
+    background: var(--panel);
+    border: 1px solid var(--bezel);
+    border-radius: 18px;
+    box-shadow: 0 0 0 6px var(--bezel), 0 30px 60px rgba(0,0,0,0.5);
+    padding: 28px 26px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .board::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.015) 0px,
+      rgba(255,255,255,0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+  }
+  .row-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .route {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 30px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: var(--amber);
+    text-shadow: 0 0 14px var(--amber-glow);
+  }
+  .stop-name {
+    font-size: 14px;
+    color: var(--text-dim);
+    text-align: right;
+    line-height: 1.4;
+  }
+  .stage {
+    text-align: center;
+    padding: 18px 0 8px;
+  }
+  .countdown {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 76px;
+    line-height: 1;
+    letter-spacing: 2px;
+    color: var(--amber);
+    text-shadow: 0 0 22px var(--amber-glow);
+    font-variant-numeric: tabular-nums;
+  }
+  .countdown.soon { color: var(--red); text-shadow: 0 0 22px rgba(255,68,51,0.45); }
+  .unit {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+  .msg {
+    margin-top: 14px;
+    font-size: 15px;
+    color: var(--amber);
+    opacity: 0.85;
+    min-height: 20px;
+  }
+  .divider {
+    height: 1px;
+    background: var(--bezel);
+    margin: 22px 0 14px;
+  }
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--amber);
+    margin-right: 6px;
+    box-shadow: 0 0 8px var(--amber-glow);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .dot.off { background: var(--text-dim); box-shadow: none; animation: none; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  @media (max-width: 380px) {
+    .countdown { font-size: 58px; }
+    .route { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="board">
+    <div class="row-top">
+      <div class="route">361</div>
+      <div class="stop-name">래미안그레이튼<br>아파트</div>
+    </div>
+    <div class="stage">
+      <div class="countdown" id="countdown">--:--</div>
+      <div class="unit" id="unit">불러오는 중</div>
+      <div class="msg" id="msg">&nbsp;</div>
+    </div>
+    <div class="divider"></div>
+    <div class="footer">
+      <span><span class="dot" id="dot"></span><span id="statusText">연결 중</span></span>
+      <span id="updatedAt">--:--:--</span>
+    </div>
+  </div>
+
+<script>
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  async function refresh() {
+    const dot = document.getElementById('dot');
+    const statusText = document.getElementById('statusText');
+    const countdown = document.getElementById('countdown');
+    const unit = document.getElementById('unit');
+    const msg = document.getElementById('msg');
+    const updatedAt = document.getElementById('updatedAt');
+
+    try {
+      const res = await fetch('/api', { cache: 'no-store' });
+      const data = await res.json();
+      const now = new Date();
+      updatedAt.textContent = now.toLocaleTimeString('ko-KR', { hour12: false });
+
+      if (data.status === 'waiting' || data.status === 'alert-sent' || data.status === 'already-alerted') {
+        const sec = data.seconds;
+        dot.classList.remove('off');
+        statusText.textContent = '정상';
+        if (sec != null && sec > 0) {
+          countdown.textContent = fmt(sec);
+          countdown.classList.toggle('soon', sec <= 300);
+          unit.textContent = '도착까지';
+          msg.textContent = data.msg1 || '';
+        } else {
+          countdown.textContent = '도착';
+          countdown.classList.add('soon');
+          unit.textContent = '';
+          msg.textContent = data.msg1 || '';
+        }
+      } else if (data.status === 'stop-not-found') {
+        dot.classList.add('off');
+        statusText.textContent = '오류';
+        countdown.textContent = '--:--';
+        unit.textContent = '정류소 정보 없음';
+        msg.textContent = '';
+      } else {
+        dot.classList.add('off');
+        statusText.textContent = '오류';
+        countdown.textContent = '--:--';
+        unit.textContent = data.message || '알 수 없는 오류';
+        msg.textContent = '';
+      }
+    } catch (e) {
+      dot.classList.add('off');
+      statusText.textContent = '연결 실패';
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 15000);
+</script>
+</body>
+</html>`;
+}
+
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runCheck(env));
@@ -110,6 +335,7 @@ export default {
 
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
     if (url.pathname === "/test-notify") {
       try {
         await sendNtfy(env, "테스트 알림입니다.", "🚌 테스트");
@@ -118,16 +344,23 @@ export default {
         return new Response(`전송 실패: ${e.message}`, { status: 500 });
       }
     }
-    try {
-      const result = await runCheck(env);
-      return new Response(JSON.stringify(result, null, 2), {
-        headers: { "content-type": "application/json; charset=utf-8" },
-      });
-    } catch (e) {
-      return new Response(
-        JSON.stringify({ status: "exception", message: e.message, stack: e.stack }, null, 2),
-        { status: 500, headers: { "content-type": "application/json; charset=utf-8" } }
-      );
+
+    if (url.pathname === "/api") {
+      try {
+        const result = await runCheck(env);
+        return new Response(JSON.stringify(result, null, 2), {
+          headers: { "content-type": "application/json; charset=utf-8" },
+        });
+      } catch (e) {
+        return new Response(
+          JSON.stringify({ status: "exception", message: e.message, stack: e.stack }, null, 2),
+          { status: 500, headers: { "content-type": "application/json; charset=utf-8" } }
+        );
+      }
     }
+
+    return new Response(renderPage(), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
   },
 };
