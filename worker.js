@@ -11,7 +11,7 @@
  * 3) Trigger: Cron * * * * *
  */
 
-const THRESHOLD_SECONDS = 380; // 5분(300초) + 체크/전송 지연 보정(약 80초)
+const THRESHOLD_SECONDS = 300; // 정확히 5분 (정밀 타이밍은 Durable Object Alarm이 담당)
 
 async function fetchArrivalSeconds(env) {
   const url = `http://ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteAll?serviceKey=${env.SERVICE_KEY}&busRouteId=${env.BUS_ROUTE_ID}`;
@@ -71,6 +71,19 @@ async function sendNtfy(env, message, title) {
   }
 }
 
+async function armPreciseAlarm(env, delayMs) {
+  try {
+    const id = env.PRECISE_ALARM.idFromName("singleton");
+    const stub = env.PRECISE_ALARM.get(id);
+    await stub.fetch("https://precise-alarm/arm", {
+      method: "POST",
+      body: JSON.stringify({ delayMs }),
+    });
+  } catch (e) {
+    // Durable Object 호출 실패해도 1분 주기 크론이 백업으로 계속 돌아가니 무시
+  }
+}
+
 async function runCheck(env) {
   const result = await fetchArrivalSeconds(env);
 
@@ -103,6 +116,11 @@ async function runCheck(env) {
 
   if (wasAlerted && seconds != null && seconds > THRESHOLD_SECONDS) {
     await env.BUS_STATE.put(alertedKey, "false");
+  }
+
+  // 아직 5분 전이 안 됐으면, 정확히 5분 남는 그 순간에 딱 맞춰 다시 깨어나도록 예약
+  if (!wasAlerted && seconds != null && seconds > THRESHOLD_SECONDS) {
+    await armPreciseAlarm(env, (seconds - THRESHOLD_SECONDS) * 1000);
   }
 
   return { status: "waiting", seconds, msg1: result.msg1 };
@@ -493,3 +511,26 @@ export default {
     });
   },
 };
+
+// 정확히 지정된 시각에 딱 한 번 깨어나서 버스 체크를 실행하는 Durable Object.
+// 1분 주기 크론만으로는 "정확히 5분 남는 순간"을 놓칠 수 있어서(최대 1분 오차),
+// 매 체크마다 그 정확한 순간까지 남은 시간을 계산해 여기에 예약해둔다.
+export class PreciseAlarm {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const { delayMs } = await request.json();
+    // 너무 먼 미래(30분 이상)는 예약할 필요 없음 - 다음 크론 때 다시 계산해서 갱신됨
+    if (delayMs > 0 && delayMs < 30 * 60 * 1000) {
+      await this.state.storage.setAlarm(Date.now() + delayMs);
+    }
+    return new Response("armed");
+  }
+
+  async alarm() {
+    await runCheck(this.env);
+  }
+}
