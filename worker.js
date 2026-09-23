@@ -101,7 +101,7 @@ async function runCheck(env) {
     return { status: "already-alerted", seconds, msg1: result.msg1 };
   }
 
-  if (wasAlerted && (seconds == null || seconds > THRESHOLD_SECONDS)) {
+  if (wasAlerted && seconds != null && seconds > THRESHOLD_SECONDS) {
     await env.BUS_STATE.put(alertedKey, "false");
   }
 
