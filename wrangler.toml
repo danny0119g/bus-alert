@@ -13,3 +13,11 @@ NTFY_TOPIC = "bus-1fae3aa855471c34"
 [[kv_namespaces]]
 binding = "BUS_STATE"
 id = "e3c8dd98016c4e9cbd1123e8832dc6bd"
+
+[[durable_objects.bindings]]
+name = "PRECISE_ALARM"
+class_name = "PreciseAlarm"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["PreciseAlarm"]
