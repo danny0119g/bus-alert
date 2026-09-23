@@ -66,23 +66,25 @@ async function fetchArrivalSeconds(env) {
 }
 
 async function sendNtfy(env, message, title) {
-  const res = await fetch("https://ntfy.sh/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-    },
-    body: JSON.stringify({
-      topic: env.NTFY_TOPIC,
-      message: message,
-      title: title || "버스 알림",
-      priority: 5,
-      tags: ["bus"],
-    }),
+  const body = JSON.stringify({
+    topic: env.NTFY_TOPIC,
+    message: message,
+    title: title || "버스 알림",
+    priority: 5,
+    tags: ["bus"],
   });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`ntfy 전송 실패 (${res.status}): ${errText}`);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await fetch("https://ntfy.sh/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body,
+    });
+    if (res.ok) return;
+    if (attempt === 1) {
+      const errText = await res.text();
+      throw new Error(`ntfy 전송 실패 (${res.status}): ${errText}`);
+    }
   }
 }
 
