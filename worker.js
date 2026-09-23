@@ -258,9 +258,15 @@ function renderPage() {
   }
   .dot.error {
     background: var(--red);
-    box-shadow: 0 0 6px rgba(255,77,77,0.5);
+    box-shadow: 0 0 8px rgba(255,77,77,0.6);
+    animation: pulse 1s ease-in-out infinite;
   }
-  .footer #statusText { color: var(--red); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  #statusText { color: var(--text-dim); }
+  #statusText.error { color: var(--red); }
   @media (max-width: 380px) {
     .countdown { font-size: 58px; }
     .route { font-size: 24px; }
@@ -334,12 +340,13 @@ function renderPage() {
 
       if (data.status === 'waiting' || data.status === 'alert-sent' || data.status === 'already-alerted') {
         els.dot.classList.remove('error');
+        els.statusText.classList.remove('error');
         els.statusText.textContent = '';
         isAlerted = data.status === 'alert-sent' || data.status === 'already-alerted';
 
         const raw = data.msg1 || '';
         const stopsMatch = raw.match(/(\\d+)번째\\s*전/);
-        stopsText = stopsMatch ? \`\${stopsMatch[1]}정류장 전\` : raw;
+        stopsText = stopsMatch ? \`\${stopsMatch[1]} 정류장 전\` : raw;
 
         if (data.seconds != null) {
           baseSeconds = data.seconds;
@@ -347,6 +354,7 @@ function renderPage() {
         }
       } else if (data.status === 'stop-not-found') {
         els.dot.classList.add('error');
+        els.statusText.classList.add('error');
         els.statusText.textContent = '정류소 정보를 찾을 수 없음';
         els.unit.textContent = '';
         stopsText = '';
@@ -354,6 +362,7 @@ function renderPage() {
         els.countdown.textContent = '--:--';
       } else {
         els.dot.classList.add('error');
+        els.statusText.classList.add('error');
         els.statusText.textContent = data.message || '알 수 없는 오류';
         els.unit.textContent = '';
         stopsText = '';
@@ -362,6 +371,7 @@ function renderPage() {
       }
     } catch (e) {
       els.dot.classList.add('error');
+      els.statusText.classList.add('error');
       els.statusText.textContent = '서버에 연결할 수 없음';
     }
     render();
