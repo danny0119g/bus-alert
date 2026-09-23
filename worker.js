@@ -123,6 +123,8 @@ function renderPage() {
     --amber-glow: rgba(255,180,0,0.35);
     --green: #23ff8c;
     --green-glow: rgba(35,255,140,0.4);
+    --blue: #3ea6ff;
+    --red: #ff4d4d;
     --text-dim: #6b7076;
   }
   * { box-sizing: border-box; }
@@ -250,16 +252,15 @@ function renderPage() {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--amber);
+    background: var(--blue);
     margin-right: 6px;
-    box-shadow: 0 0 8px var(--amber-glow);
-    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 6px rgba(62,166,255,0.5);
   }
-  .dot.off { background: var(--text-dim); box-shadow: none; animation: none; }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.35; }
+  .dot.error {
+    background: var(--red);
+    box-shadow: 0 0 6px rgba(255,77,77,0.5);
   }
+  .footer #statusText { color: var(--red); }
   @media (max-width: 380px) {
     .countdown { font-size: 58px; }
     .route { font-size: 24px; }
@@ -332,8 +333,8 @@ function renderPage() {
       const data = await res.json();
 
       if (data.status === 'waiting' || data.status === 'alert-sent' || data.status === 'already-alerted') {
-        els.dot.classList.remove('off');
-        els.statusText.textContent = '정상';
+        els.dot.classList.remove('error');
+        els.statusText.textContent = '';
         isAlerted = data.status === 'alert-sent' || data.status === 'already-alerted';
 
         const raw = data.msg1 || '';
@@ -345,23 +346,23 @@ function renderPage() {
           baseTimestamp = Date.now();
         }
       } else if (data.status === 'stop-not-found') {
-        els.dot.classList.add('off');
-        els.statusText.textContent = '오류';
-        els.unit.textContent = '정류소 정보 없음';
+        els.dot.classList.add('error');
+        els.statusText.textContent = '정류소 정보를 찾을 수 없음';
+        els.unit.textContent = '';
         stopsText = '';
         baseSeconds = null;
         els.countdown.textContent = '--:--';
       } else {
-        els.dot.classList.add('off');
-        els.statusText.textContent = '오류';
-        els.unit.textContent = data.message || '알 수 없는 오류';
+        els.dot.classList.add('error');
+        els.statusText.textContent = data.message || '알 수 없는 오류';
+        els.unit.textContent = '';
         stopsText = '';
         baseSeconds = null;
         els.countdown.textContent = '--:--';
       }
     } catch (e) {
-      els.dot.classList.add('off');
-      els.statusText.textContent = '연결 실패';
+      els.dot.classList.add('error');
+      els.statusText.textContent = '서버에 연결할 수 없음';
     }
     render();
   }
