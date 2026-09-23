@@ -209,7 +209,7 @@ function renderPage() {
     font-weight: 900;
     font-variation-settings: 'ROND' 100;
     font-size: 26px;
-    padding: 4px 12px;
+    padding: 4px 6px 4px 12px;
     border-radius: 2px;
   }
   .stop-name {
