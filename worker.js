@@ -120,14 +120,16 @@ function renderPage() {
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #08090b;
-    --panel: #101215;
-    --bezel: #1c1f24;
+    --bg: #030303;
+    --panel: #050505;
+    --case: #212226;
+    --case-light: #34353a;
+    --seam: #000;
+    --plate-blue: #1a56db;
     --amber: #ffb400;
-    --amber-dim: #5c4000;
-    --amber-glow: rgba(255,180,0,0.35);
+    --amber-glow: rgba(255,180,0,0.25);
     --green: #23ff8c;
-    --green-glow: rgba(35,255,140,0.4);
+    --green-glow: rgba(35,255,140,0.3);
     --blue: #3ea6ff;
     --red: #ff4d4d;
     --text-dim: #6b7076;
@@ -150,14 +152,33 @@ function renderPage() {
     padding-bottom: max(24px, env(safe-area-inset-bottom));
     min-height: 100%;
   }
-  .board {
+  .case {
     width: 100%;
     max-width: 480px;
+    background: linear-gradient(155deg, var(--case-light), var(--case) 40%, #17181b);
+    border-radius: 3px;
+    padding: 14px;
+    position: relative;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.55);
+  }
+  .screw {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #8a8c92, #3a3b3f 60%, #1c1d20);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
+  }
+  .screw.tl { top: 8px; left: 8px; }
+  .screw.tr { top: 8px; right: 8px; }
+  .screw.bl { bottom: 8px; left: 8px; }
+  .screw.br { bottom: 8px; right: 8px; }
+  .board {
     background: var(--panel);
-    border: 1px solid var(--bezel);
-    border-radius: 18px;
-    box-shadow: 0 0 0 6px var(--bezel), 0 30px 60px rgba(0,0,0,0.5);
-    padding: 28px 26px 22px;
+    border: 1px solid var(--seam);
+    border-radius: 1px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), inset 0 2px 10px rgba(0,0,0,0.8);
+    padding: 26px 24px 20px;
     position: relative;
     overflow: hidden;
   }
@@ -167,8 +188,8 @@ function renderPage() {
     inset: 0;
     background: repeating-linear-gradient(
       0deg,
-      rgba(255,255,255,0.015) 0px,
-      rgba(255,255,255,0.015) 1px,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 1px,
       transparent 1px,
       transparent 3px
     );
@@ -176,18 +197,21 @@ function renderPage() {
   }
   .row-top {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 22px;
+    margin-bottom: 24px;
   }
-  .route {
+  .route-plate {
+    background: var(--plate-blue);
+    color: #fff;
     font-family: 'Share Tech Mono', monospace;
-    font-size: 30px;
-    font-weight: 400;
+    font-size: 22px;
+    font-weight: 700;
     letter-spacing: 1px;
-    color: var(--amber);
-    text-shadow: 0 0 14px var(--amber-glow);
+    padding: 5px 12px 4px;
+    border-radius: 2px;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.08);
   }
   .stop-name {
     font-size: 14px;
@@ -205,10 +229,10 @@ function renderPage() {
     line-height: 1;
     letter-spacing: 2px;
     color: var(--amber);
-    text-shadow: 0 0 22px var(--amber-glow);
+    text-shadow: 0 0 6px var(--amber-glow);
     font-variant-numeric: tabular-nums;
   }
-  .countdown.soon { color: var(--green); text-shadow: 0 0 24px var(--green-glow); }
+  .countdown.soon { color: var(--green); text-shadow: 0 0 8px var(--green-glow); }
   .unit.soon { color: var(--green); opacity: 0.8; }
   .alert-badge {
     margin-top: 14px;
@@ -241,7 +265,8 @@ function renderPage() {
   }
   .divider {
     height: 1px;
-    background: var(--bezel);
+    background: #000;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04);
     margin: 22px 0 14px;
   }
   .footer {
@@ -279,14 +304,19 @@ function renderPage() {
   }
   @media (max-width: 380px) {
     .countdown { font-size: 58px; }
-    .route { font-size: 24px; }
+    .route-plate { font-size: 17px; padding: 4px 9px 3px; }
   }
 </style>
 </head>
 <body>
+  <div class="case">
+    <span class="screw tl"></span>
+    <span class="screw tr"></span>
+    <span class="screw bl"></span>
+    <span class="screw br"></span>
   <div class="board">
     <div class="row-top">
-      <div class="route">361</div>
+      <div class="route-plate">361</div>
       <div class="stop-name">래미안그레이튼<br>아파트</div>
     </div>
     <div class="stage">
@@ -300,6 +330,7 @@ function renderPage() {
       <span class="status-group"><span class="dot" id="dot"></span><span id="statusText"></span></span>
       <span id="updatedAt">--:--:--</span>
     </div>
+  </div>
   </div>
 
 <script>
