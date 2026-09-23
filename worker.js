@@ -306,8 +306,22 @@ function renderPage() {
   let baseSeconds = null;   // 마지막으로 서버가 알려준 남은 초
   let baseTimestamp = null; // 그 값을 받은 시각 (ms)
   let isAlerted = false;
+  let msgIsTicking = false; // arrmsg1이 "n분n초후" 형태라 같이 셀 수 있는지
+  let msgSuffix = '';       // "[7번째 전]" 같은 뒷부분
+  let msgStatic = '';       // 시간 표현이 아닌 경우 그대로 보여줄 문구
+
+  function formatMsg(remaining) {
+    if (!msgIsTicking) return msgStatic;
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    const core = m > 0 ? \`\${m}분 \${s}초 후\` : \`\${s}초 후\`;
+    return core + msgSuffix;
+  }
 
   function render() {
+    // 하단 시계는 항상 매초 살아있게
+    els.updatedAt.textContent = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+
     if (baseSeconds == null) return;
     const elapsed = Math.floor((Date.now() - baseTimestamp) / 1000);
     const remaining = Math.max(0, baseSeconds - elapsed);
@@ -317,6 +331,7 @@ function renderPage() {
     els.countdown.classList.toggle('soon', isSoon);
     els.unit.classList.toggle('soon', isSoon);
     els.unit.textContent = remaining > 0 ? '도착까지' : '';
+    els.msg.textContent = formatMsg(remaining);
 
     els.alertBadge.classList.toggle('show', isSoon && isAlerted);
   }
@@ -325,14 +340,22 @@ function renderPage() {
     try {
       const res = await fetch('/api', { cache: 'no-store' });
       const data = await res.json();
-      const now = new Date();
-      els.updatedAt.textContent = now.toLocaleTimeString('ko-KR', { hour12: false });
 
       if (data.status === 'waiting' || data.status === 'alert-sent' || data.status === 'already-alerted') {
         els.dot.classList.remove('off');
         els.statusText.textContent = '정상';
-        els.msg.textContent = data.msg1 || '';
         isAlerted = data.status === 'alert-sent' || data.status === 'already-alerted';
+
+        const raw = data.msg1 || '';
+        const looksLikeTime = /\\d+(분|초)/.test(raw) && raw.includes('후');
+        if (looksLikeTime) {
+          msgIsTicking = true;
+          const bracket = raw.match(/\\[[^\\]]*\\]/);
+          msgSuffix = bracket ? bracket[0] : '';
+        } else {
+          msgIsTicking = false;
+          msgStatic = raw;
+        }
 
         if (data.seconds != null) {
           baseSeconds = data.seconds;
@@ -342,14 +365,16 @@ function renderPage() {
         els.dot.classList.add('off');
         els.statusText.textContent = '오류';
         els.unit.textContent = '정류소 정보 없음';
-        els.msg.textContent = '';
+        msgIsTicking = false;
+        msgStatic = '';
         baseSeconds = null;
         els.countdown.textContent = '--:--';
       } else {
         els.dot.classList.add('off');
         els.statusText.textContent = '오류';
         els.unit.textContent = data.message || '알 수 없는 오류';
-        els.msg.textContent = '';
+        msgIsTicking = false;
+        msgStatic = '';
         baseSeconds = null;
         els.countdown.textContent = '--:--';
       }
@@ -362,7 +387,7 @@ function renderPage() {
 
   poll();
   setInterval(poll, 20000);   // 20초마다 서버에서 실제 값 다시 받아오기 (보정)
-  setInterval(render, 1000);  // 매초 화면 숫자만 로컬로 갱신
+  setInterval(render, 1000);  // 매초 화면 전체(숫자/문구/시계) 로컬로 갱신
 </script>
 </body>
 </html>`;
