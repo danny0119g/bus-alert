@@ -11,7 +11,7 @@
  * 3) Trigger: Cron * * * * *
  */
 
-const THRESHOLD_SECONDS = 300; // 5분
+const THRESHOLD_SECONDS = 380; // 5분(300초) + 체크/전송 지연 보정(약 80초)
 
 async function fetchArrivalSeconds(env) {
   const url = `http://ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteAll?serviceKey=${env.SERVICE_KEY}&busRouteId=${env.BUS_ROUTE_ID}`;
