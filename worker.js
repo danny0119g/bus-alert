@@ -93,8 +93,7 @@ async function clearPreciseAlarm(env) {
 }
 
 // DO 알람이 울렸을 때 호출됨: 남은 시간 재는 것 없이 무조건 바로 전송
-async function fireAlert(env) {
-  const result = await fetchArrivalSeconds(env);
+async function fireAlertWithResult(env, result) {
   const seconds = result.found ? result.seconds1 : null;
   const minutes = seconds != null ? Math.round(seconds / 60) : 5;
   try {
@@ -109,6 +108,11 @@ async function fireAlert(env) {
   }
   await env.BUS_STATE.put("alerted", "true");
   await env.BUS_STATE.put("armed", "false");
+}
+
+async function fireAlert(env) {
+  const result = await fetchArrivalSeconds(env);
+  await fireAlertWithResult(env, result);
 }
 
 async function runCheck(env) {
@@ -557,10 +561,11 @@ export class PreciseAlarm {
     const url = new URL(request.url);
     if (url.pathname === "/clear") {
       await this.state.storage.deleteAlarm();
+      await this.state.storage.delete("retried");
       return new Response("cleared");
     }
     const { delayMs } = await request.json();
-    // 너무 먼 미래(30분 이상)는 예약할 필요 없음 - 다음 크론 때 다시 계산해서 갱신됨
+    await this.state.storage.delete("retried"); // 새로 예약하는 거면 재시도 카운트 리셋
     if (delayMs > 0 && delayMs < 30 * 60 * 1000) {
       await this.state.storage.setAlarm(Date.now() + delayMs);
     }
@@ -568,6 +573,19 @@ export class PreciseAlarm {
   }
 
   async alarm() {
-    await fireAlert(this.env);
+    const result = await fetchArrivalSeconds(this.env);
+    const seconds = result.found ? result.seconds1 : null;
+    const alreadyRetried = await this.state.storage.get("retried");
+
+    if (seconds != null && seconds > THRESHOLD_SECONDS && !alreadyRetried) {
+      // 아직 5분 전이 안 됐고, 재조정도 안 해봤으면 딱 한 번만 재조정
+      await this.state.storage.put("retried", true);
+      await this.state.storage.setAlarm(Date.now() + (seconds - THRESHOLD_SECONDS) * 1000);
+      return;
+    }
+
+    // 이미 5분 전이거나, 재조정을 한 번 했으면 더 재지 않고 바로 전송
+    await fireAlertWithResult(this.env, result);
+    await this.state.storage.delete("retried");
   }
 }
