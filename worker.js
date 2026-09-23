@@ -118,8 +118,9 @@ async function runCheck(env) {
     await env.BUS_STATE.put(alertedKey, "false");
   }
 
-  // 아직 5분 전이 안 됐으면, 정확히 5분 남는 그 순간에 딱 맞춰 다시 깨어나도록 예약
-  if (!wasAlerted && seconds != null && seconds > THRESHOLD_SECONDS) {
+  // 6~7분(420초) 구간에 들어왔을 때만, 정확히 5분 남는 순간에 깨어나도록 예약
+  // (멀리 있을 땐 매분 불필요하게 DO를 호출하지 않음)
+  if (!wasAlerted && seconds != null && seconds > THRESHOLD_SECONDS && seconds <= 420) {
     await armPreciseAlarm(env, (seconds - THRESHOLD_SECONDS) * 1000);
   }
 
