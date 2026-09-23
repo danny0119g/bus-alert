@@ -117,7 +117,7 @@ function renderPage() {
 <title>361 · 래미안그레이튼아파트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Doto:wght,ROND@100..900,0..100&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght,ROND@100..900,0..100&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #030303;
@@ -140,7 +140,7 @@ function renderPage() {
     height: 100%;
     background: var(--bg);
     color: var(--amber);
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: 'IBM Plex Sans KR', sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   body {
@@ -275,7 +275,7 @@ function renderPage() {
     align-items: center;
     font-size: 12px;
     color: var(--text-dim);
-    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-family: 'IBM Plex Mono', monospace;
   }
   .dot {
     display: inline-block;
