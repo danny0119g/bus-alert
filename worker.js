@@ -267,6 +267,10 @@ function renderPage() {
   }
   #statusText { color: var(--text-dim); }
   #statusText.error { color: var(--red); }
+  .status-group {
+    display: flex;
+    align-items: center;
+  }
   @media (max-width: 380px) {
     .countdown { font-size: 58px; }
     .route { font-size: 24px; }
@@ -287,7 +291,7 @@ function renderPage() {
     </div>
     <div class="divider"></div>
     <div class="footer">
-      <span><span class="dot" id="dot"></span><span id="statusText">연결 중</span></span>
+      <span class="status-group"><span class="dot" id="dot"></span><span id="statusText"></span></span>
       <span id="updatedAt">--:--:--</span>
     </div>
   </div>
@@ -297,6 +301,13 @@ function renderPage() {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function fmtClock(d) {
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    const s = String(d.getSeconds()).padStart(2, '0');
+    return h + ':' + m + ':' + s;
   }
 
   const els = {
@@ -317,7 +328,7 @@ function renderPage() {
 
   function render() {
     // 하단 시계는 항상 매초 살아있게
-    els.updatedAt.textContent = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+    els.updatedAt.textContent = fmtClock(new Date());
 
     if (baseSeconds == null) return;
     const elapsed = Math.floor((Date.now() - baseTimestamp) / 1000);
