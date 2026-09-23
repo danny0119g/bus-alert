@@ -7,7 +7,7 @@ crons = ["* * * * *"]
 
 [vars]
 ARS_ID = "23297"
-ROUTE_NAME = "361"
+BUS_ROUTE_ID = "100100454"
 NTFY_TOPIC = "bus-1fae3aa855471c34"
 
 [[kv_namespaces]]
