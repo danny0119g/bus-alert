@@ -121,7 +121,8 @@ function renderPage() {
     --amber: #ffb400;
     --amber-dim: #5c4000;
     --amber-glow: rgba(255,180,0,0.35);
-    --red: #ff4433;
+    --green: #23ff8c;
+    --green-glow: rgba(35,255,140,0.4);
     --text-dim: #6b7076;
   }
   * { box-sizing: border-box; }
@@ -200,7 +201,24 @@ function renderPage() {
     text-shadow: 0 0 22px var(--amber-glow);
     font-variant-numeric: tabular-nums;
   }
-  .countdown.soon { color: var(--red); text-shadow: 0 0 22px rgba(255,68,51,0.45); }
+  .countdown.soon { color: var(--green); text-shadow: 0 0 24px var(--green-glow); }
+  .unit.soon { color: var(--green); opacity: 0.8; }
+  .alert-badge {
+    margin-top: 14px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--green);
+    background: rgba(35,255,140,0.08);
+    border: 1px solid rgba(35,255,140,0.35);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .alert-badge.show { display: flex; }
+  .alert-badge .bell { font-size: 16px; }
   .unit {
     font-size: 15px;
     color: var(--text-dim);
@@ -258,6 +276,7 @@ function renderPage() {
       <div class="countdown" id="countdown">--:--</div>
       <div class="unit" id="unit">불러오는 중</div>
       <div class="msg" id="msg">&nbsp;</div>
+      <div class="alert-badge" id="alertBadge"><span class="bell">🔔</span><span>알림 전송됨</span></div>
     </div>
     <div class="divider"></div>
     <div class="footer">
