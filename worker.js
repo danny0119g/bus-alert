@@ -92,6 +92,25 @@ async function clearPreciseAlarm(env) {
   } catch (e) {}
 }
 
+// DO 알람이 울렸을 때 호출됨: 남은 시간 재는 것 없이 무조건 바로 전송
+async function fireAlert(env) {
+  const result = await fetchArrivalSeconds(env);
+  const seconds = result.found ? result.seconds1 : null;
+  const minutes = seconds != null ? Math.round(seconds / 60) : 5;
+  try {
+    await sendNtfy(
+      env,
+      `361번 버스가 약 ${minutes}분 후 ${(result.found && result.stNm) || "정류소"}에 도착해요. (${(result.found && result.msg1) || ""})`,
+      "🚌 버스 도착 임박"
+    );
+  } catch (e) {
+    // 실패해도 armed/alerted는 갱신 - 다음 6~7분 구간에서 다시 시도되진 않지만,
+    // 일반 크론의 안전망(아래 runCheck)이 따로 재전송을 시도함
+  }
+  await env.BUS_STATE.put("alerted", "true");
+  await env.BUS_STATE.put("armed", "false");
+}
+
 async function runCheck(env) {
   const result = await fetchArrivalSeconds(env);
 
@@ -99,39 +118,41 @@ async function runCheck(env) {
     return { status: "stop-not-found", detail: result.raw, itemCount: result.itemCount };
   }
 
-  const alertedKey = "alerted";
-  const wasAlerted = (await env.BUS_STATE.get(alertedKey)) === "true";
+  const wasAlerted = (await env.BUS_STATE.get("alerted")) === "true";
+  const wasArmed = (await env.BUS_STATE.get("armed")) === "true";
   const seconds = result.seconds1;
 
-  if (seconds != null && seconds > 0 && seconds <= THRESHOLD_SECONDS) {
-    if (!wasAlerted) {
-      const minutes = Math.round(seconds / 60);
-      try {
-        await sendNtfy(
-          env,
-          `361번 버스가 약 ${minutes}분 후 ${result.stNm || "정류소"}에 도착해요. (${result.msg1 || ""})`,
-          "🚌 버스 도착 임박"
-        );
-        await env.BUS_STATE.put(alertedKey, "true");
-        await clearPreciseAlarm(env);
-        return { status: "alert-sent", seconds, msg1: result.msg1 };
-      } catch (e) {
-        // 알림 전송이 실패해도 화면 표시는 정상적으로 유지, 다음 체크 때 다시 시도
-        return { status: "waiting", seconds, msg1: result.msg1 };
-      }
+  // 이미 5분 이내인데 아직 안 보냈다면 (DO가 놓쳤을 때의 안전망) 바로 전송
+  if (seconds != null && seconds > 0 && seconds <= THRESHOLD_SECONDS && !wasAlerted) {
+    const minutes = Math.round(seconds / 60);
+    try {
+      await sendNtfy(
+        env,
+        `361번 버스가 약 ${minutes}분 후 ${result.stNm || "정류소"}에 도착해요. (${result.msg1 || ""})`,
+        "🚌 버스 도착 임박"
+      );
+      await env.BUS_STATE.put("alerted", "true");
+      await env.BUS_STATE.put("armed", "false");
+      await clearPreciseAlarm(env);
+      return { status: "alert-sent", seconds, msg1: result.msg1 };
+    } catch (e) {
+      return { status: "waiting", seconds, msg1: result.msg1 };
     }
-    await clearPreciseAlarm(env);
-    return { status: "already-alerted", seconds, msg1: result.msg1 };
   }
 
-  if (wasAlerted && seconds != null && seconds > THRESHOLD_SECONDS) {
-    await env.BUS_STATE.put(alertedKey, "false");
+  if (wasAlerted) {
+    // 버스가 다시 멀어졌으면(다음 운행 주기) 상태 초기화
+    if (seconds == null || seconds > THRESHOLD_SECONDS) {
+      await env.BUS_STATE.put("alerted", "false");
+      await env.BUS_STATE.put("armed", "false");
+    }
+    return { status: seconds != null && seconds <= THRESHOLD_SECONDS ? "already-alerted" : "waiting", seconds, msg1: result.msg1 };
   }
 
-  // 6~7분(420초) 구간에 들어왔을 때만, 정확히 5분 남는 순간에 깨어나도록 예약
-  // (멀리 있을 땐 매분 불필요하게 DO를 호출하지 않음)
-  if (!wasAlerted && seconds != null && seconds > THRESHOLD_SECONDS && seconds <= 420) {
-    await armPreciseAlarm(env, (seconds - THRESHOLD_SECONDS) * 500); // 남은 차이의 절반만 대기 후 재확인 (반복 수렴)
+  // 6~7분(420초) 구간에 막 들어왔고, 아직 예약 안 해뒀으면 "딱 한 번만" 예약
+  if (!wasArmed && seconds != null && seconds > THRESHOLD_SECONDS && seconds <= 420) {
+    await armPreciseAlarm(env, (seconds - THRESHOLD_SECONDS) * 1000);
+    await env.BUS_STATE.put("armed", "true");
   }
 
   return { status: "waiting", seconds, msg1: result.msg1 };
@@ -547,6 +568,6 @@ export class PreciseAlarm {
   }
 
   async alarm() {
-    await runCheck(this.env);
+    await fireAlert(this.env);
   }
 }
